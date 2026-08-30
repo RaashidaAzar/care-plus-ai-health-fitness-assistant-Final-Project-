@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en" data-theme="{{ current_theme or 'light' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Care Plus{% endblock %} — AI Health & Fitness Assistant</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/care-plus-logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.font.family = 'Inter, Segoe UI, sans-serif';
+            Chart.defaults.font.size = 12;
+            Chart.defaults.color = '#7A6080';
+            Chart.defaults.borderColor = 'rgba(170,68,136,0.10)';
+            Chart.defaults.plugins.legend.labels.usePointStyle = true;
+            Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+            Chart.defaults.plugins.legend.labels.boxWidth = 10;
+            Chart.defaults.elements.line.borderWidth = 2;
+            Chart.defaults.elements.line.tension = 0.35;
+            Chart.defaults.elements.point.radius = 3;
+            Chart.defaults.elements.point.hoverRadius = 5;
+            Chart.defaults.elements.bar.borderRadius = 6;
+            Chart.defaults.scale.grid.color = 'rgba(170,68,136,0.08)';
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        {% if current_user.is_authenticated %}
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='images/care_plus_logo2.png') }}" alt="Care Plus Logo" class="sidebar-logo">
+                <div>
+                    <div class="sidebar-brand">Care Plus</div>
+                    <div class="sidebar-sub">PERSONAL HEALTH DESK</div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('food_recognition_page') }}" class="sidebar-link {% if request.endpoint == 'food_recognition_page' %}active{% endif %}">
+                        <span class="link-text">Food Recognition</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('food_history') }}" class="sidebar-link {% if request.endpoint == 'food_history' %}active{% endif %}">
+                        <span class="link-text">Food & Calorie Log</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('calorie_burn') }}" class="sidebar-link {% if request.endpoint == 'calorie_burn' %}active{% endif %}">
+                        <span class="link-text">Calorie Burn Prediction</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('health') }}" class="sidebar-link {% if request.endpoint == 'health' %}active{% endif %}">
+                        <span class="link-text">Health Monitoring</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('medications') }}" class="sidebar-link {% if request.endpoint == 'medications' %}active{% endif %}">
+                        <span class="link-text">Medication Reminder</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('wellness') }}" class="sidebar-link {% if request.endpoint == 'wellness' %}active{% endif %}">
+                        <span class="link-text">Activity & Wellness Reminders</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('progress') }}" class="sidebar-link {% if request.endpoint == 'progress' %}active{% endif %}">
+                        <span class="link-text">Progress Charts</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('reports') }}" class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}">
+                        <span class="link-text">Health Reports</span>
+                    </a>
+                </li>
+                <li class="sidebar-item" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <a href="{{ url_for('profile') }}" class="sidebar-link {% if request.endpoint == 'profile' %}active{% endif %}">
+                        <span class="link-text">Profile Setup</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('settings') }}" class="sidebar-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                        <span class="link-text">Settings</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="btn btn-outline sidebar-logout">
+                    Log out
+                </a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content View -->
+        <main class="main-content" {% if not current_user.is_authenticated %}style="margin-left: 0;"{% endif %}>
+            {% if current_user.is_authenticated %}
+            <header class="top-navbar">
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation"><span class="icon icon-menu" aria-hidden="true"></span></button>
+                <div class="topbar-heading">
+                    <div class="page-title">{% block header_title %}Care Plus Dashboard{% endblock %}</div>
+                </div>
+                <label class="global-search" for="globalSearch">
+                    <span class="icon icon-search" aria-hidden="true"></span>
+                    <input id="globalSearch" type="search" placeholder="Search pages" autocomplete="off">
+                </label>
+                <div class="user-nav">
+                    <a class="user-chip" href="{{ url_for('profile') }}" title="Open profile">
+                        <span class="avatar">{{ (current_user.username or 'U')[:1]|upper }}</span>
+                        <span class="user-name">{{ current_user.username }}</span>
+                    </a>
+                    <button type="button" id="themeToggle" class="theme-toggle-btn" title="Toggle light and dark mode" aria-label="Toggle light and dark mode">
+                        <span id="themeToggleIcon" class="icon icon-theme" aria-hidden="true"></span><span id="themeToggleText">Dark mode</span>
+                    </button>
+                </div>
+            </header>
+            {% endif %}
+
+            <div class="content-wrapper">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container">
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <span>{{ message }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+
+                {% if current_user.is_authenticated and current_user.profile and not current_user.profile.bmi_onboarding_completed %}
+                <div id="bmiOnboardingModal" role="dialog" aria-modal="true" aria-labelledby="bmiOnboardingTitle" style="display: flex; position: fixed; inset: 0; z-index: 1100; align-items: center; justify-content: center; padding: 1rem; background: rgba(15, 23, 42, 0.55);">
+                    <div class="card" style="width: min(480px, 100%); max-height: 90vh; overflow-y: auto;">
+                        <h2 id="bmiOnboardingTitle" style="color: var(--primary-color);">Check your BMI</h2>
+                        <p class="card-sub">Add your height and weight so Care Plus can calculate your BMI and personalize your dashboard.</p>
+                        <form method="POST" action="{{ url_for('complete_bmi_onboarding') }}">
+                            <div class="grid-2">
+                                <label class="form-label" for="onboarding_height_cm">Height (cm)
+                                    <input type="number" step="0.5" min="80" max="250" id="onboarding_height_cm" name="height_cm" class="form-control" required>
+                                </label>
+                                <label class="form-label" for="onboarding_weight_kg">Weight (kg)
+                                    <input type="number" step="0.1" min="20" max="400" id="onboarding_weight_kg" name="weight_kg" class="form-control" required>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Calculate & Save BMI</button>
+                            <button type="submit" name="action" value="skip" formnovalidate class="btn btn-outline">Skip for now</button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if current_user.is_authenticated %}
+                <script id="appSettings" type="application/json">{{ {'theme': current_theme, 'timezone': reminder_timezone}|tojson }}</script>
+                <script id="medicationReminderData" type="application/json">{{ medication_reminders|tojson }}</script>
+                <div id="medicationReminderPopup" class="reminder-popup" role="alertdialog" aria-live="assertive" aria-atomic="true" style="display: none;">
+                    <strong id="medicationReminderTitle">Medication reminder</strong>
+                    <span id="medicationReminderMessage"></span>
+                    <button type="button" id="dismissMedicationReminder" class="btn btn-primary" style="margin-top: 0.9rem; padding: 0.45rem 0.8rem;">Dismiss</button>
+                </div>
+                <script id="wellnessReminderData" type="application/json">{{ wellness_reminders|tojson }}</script>
+                <div id="wellnessReminderPopup" class="reminder-popup wellness-popup" role="alertdialog" aria-live="assertive" aria-atomic="true" style="display: none;">
+                    <strong id="wellnessReminderTitle">Wellness reminder</strong>
+                    <span id="wellnessReminderMessage"></span>
+                    <button type="button" id="dismissWellnessReminder" class="btn btn-primary" style="margin-top: 0.9rem; padding: 0.45rem 0.8rem;">Dismiss</button>
+                </div>
+                {% endif %}
+
+                <div class="disclaimer-banner">
+                    <strong>Care Plus Disclaimer:</strong> Care Plus provides general health and fitness tracking for adults aged 40+. AI predictions and nutrition estimates are for educational guidance and do not replace professional medical advice or diagnosis.
+                </div>
+            </div>
+
+            <footer class="app-footer">
+                Care Plus © 2026 — AI-Based Personal Health & Fitness Assistant for Adults Aged 40+
+            </footer>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const search = document.getElementById('globalSearch');
+            if (!search) return;
+            search.addEventListener('input', function () {
+                const query = search.value.trim().toLowerCase();
+                document.querySelectorAll('.sidebar-item').forEach(function (item) {
+                    item.hidden = query && !item.textContent.toLowerCase().includes(query);
+                });
+            });
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

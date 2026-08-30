@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — Care Plus{% endblock %}
+{% block header_title %}Care Plus Application Settings{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="color: var(--primary-color); font-size: 1.75rem;">Settings</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Manage account security and preferences used by Care Plus.</p>
+</div>
+
+<div class="grid-2">
+    <!-- Security / Password Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Security &amp; Password</h3>
+        <form method="POST" action="{{ url_for('settings') }}">
+            <input type="hidden" name="action" value="password">
+            <div class="form-group">
+                <label class="form-label" for="current_password">Current Password</label>
+                <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Enter your current password" required autocomplete="current-password">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="new_password">New Password</label>
+                <input type="password" id="new_password" name="new_password" class="form-control" placeholder="At least 6 characters" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="confirm_password">Confirm New Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat new password" required autocomplete="new-password">
+            </div>
+            <div style="padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Update Password</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Session Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Session</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.5rem;">Safely terminate your current active session on Care Plus. You will be redirected to the login page.</p>
+        <div style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <a href="{{ url_for('logout') }}" class="btn btn-danger" style="width: 100%; justify-content: center;">Logout of Care Plus</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

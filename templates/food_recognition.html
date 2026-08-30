@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Food Recognition — Care Plus{% endblock %}
+{% block header_title %}AI Food Recognition{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="color: var(--primary-color); font-size: 1.75rem; margin-bottom: 0.35rem;">CNN AI Food Recognition</h1>
+        <p style="color: var(--text-muted);">Upload a food image to identify one of the 66 foods supported by the trained CNN model.</p>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom: 1.75rem;">
+    <!-- Upload Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Upload Food Image</h3>
+        <form id="foodPredictionForm" method="POST" action="{{ url_for('food_recognition_page') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="foodImageInput">Select Food Image File</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="foodImageInput" name="image" class="file-input-hidden" accept="image/jpeg,image/png,image/webp" required>
+                    <label for="foodImageInput" class="file-input-label">
+                        <span id="fileInputText">Choose image file&hellip;</span>
+                    </label>
+                </div>
+                <div style="margin-top: 0.4rem; font-size: 0.78rem; color: var(--text-muted);">Supported formats: JPG, PNG, WEBP</div>
+            </div>
+            <div id="imagePreviewContainer" style="display: none; margin: 1rem 0; text-align: center; background-color: var(--bg-color); padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">
+                <img id="imagePreview" src="" alt="Selected Preview" style="max-height: 240px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm);">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Identify Food</button>
+        </form>
+    </div>
+
+    <!-- Result / Manual fallback -->
+    <div class="card">
+        {% if result and result.error %}
+        <h3 style="color: var(--primary-color); margin-bottom: 0.75rem;">Recognition unavailable</h3>
+        <p style="color: var(--text-muted); margin-bottom: 0.75rem;">{{ result.error }}</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">You can still log a meal using the nutrition records stored in the database.</p>
+        <form method="POST" action="{{ url_for('save_food_record') }}">
+            <div class="form-group">
+                <label class="form-label" for="manual_food_name">Food item</label>
+                <select id="manual_food_name" name="food_name" class="form-select" required>
+                    <option value="">Select a database item</option>
+                    {% for item in nutrition_options %}
+                    <option value="{{ item.food_name }}">{{ item.food_name.replace('_', ' ').title() }} ({{ item.calories }} kcal / 100g)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="manual_serving_amount">Serving amount (g)</label>
+                <input type="number" id="manual_serving_amount" name="serving_amount_g" class="form-control" value="100" min="10" max="2000" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save database nutrition entry</button>
+        </form>
+        {% elif result and not result.error %}
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <h3 style="color: var(--primary-color);">{{ result.food_name }}</h3>
+                <div style="margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span class="badge badge-success">AI Confidence: {{ result.confidence_percent }}%</span>
+                    <span class="badge badge-warning">Health: {{ result.health_suggestion }}</span>
+                    <span class="badge badge-info">100g Base</span>
+                </div>
+            </div>
+            {% if result.image_url %}
+            <img src="{{ result.image_url }}" alt="{{ result.food_name }}" style="width: 90px; height: 90px; object-fit: cover; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            {% endif %}
+        </div>
+        <div class="table-responsive" style="margin-bottom: 1rem;">
+            <table class="custom-table">
+                <thead><tr><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Sugar</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>{{ result.nutrition.calories }} kcal</strong></td>
+                        <td>{{ result.nutrition.protein }}g</td>
+                        <td>{{ result.nutrition.carbohydrates }}g</td>
+                        <td>{{ result.nutrition.fat }}g</td>
+                        <td>{{ result.nutrition.fibre }}g</td>
+                        <td>{{ result.nutrition.sugar }}g</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <h3 style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem;">No result yet</h3>
+            <p style="font-size: 0.9rem;">Upload a food image and click Identify Food to see the AI recognition result here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if result and not result.error %}
+<div class="card" style="border-top: 4px solid var(--primary-color);">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Save to Food Log &mdash; Portion Adjuster</h3>
+    <form method="POST" action="{{ url_for('save_food_record') }}">
+        <input type="hidden" name="food_name" value="{{ result.food_name }}">
+        <input type="hidden" name="calories" value="{{ result.nutrition.calories }}">
+        <input type="hidden" name="protein" value="{{ result.nutrition.protein }}">
+        <input type="hidden" name="carbohydrates" value="{{ result.nutrition.carbohydrates }}">
+        <input type="hidden" name="fat" value="{{ result.nutrition.fat }}">
+        <input type="hidden" name="fibre" value="{{ result.nutrition.fibre }}">
+        <input type="hidden" name="sugar" value="{{ result.nutrition.sugar }}">
+        <div class="grid-2" style="margin-bottom: 1rem;">
+            <div>
+                <label class="form-label" for="serving_amount_g">Serving Amount (grams)</label>
+                <input type="number" step="5" id="serving_amount_g" name="serving_amount_g" class="form-control" value="100" min="10" max="2000"
+                       data-base-cals="{{ result.nutrition.calories }}"
+                       data-base-prot="{{ result.nutrition.protein }}"
+                       data-base-carbs="{{ result.nutrition.carbohydrates }}"
+                       data-base-fat="{{ result.nutrition.fat }}"
+                       data-base-fibre="{{ result.nutrition.fibre }}"
+                       data-base-sugar="{{ result.nutrition.sugar }}" required>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Default is 100g. Enter your portion size to scale nutrition automatically.</div>
+            </div>
+            <div>
+                <label class="form-label" for="meal_name">Meal Category</label>
+                <select id="meal_name" name="meal_name" class="form-select">
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch" selected>Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Snack">Snack</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-bottom: 1.25rem; font-size: 0.95rem; font-weight: 600; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <span style="color: var(--text-muted);">Calculated Total:</span>
+            <span id="calc_cals" class="badge badge-success">{{ result.nutrition.calories }} kcal</span>
+            <span id="calc_prot" class="badge badge-info">{{ result.nutrition.protein }}g Protein</span>
+            <span id="calc_carbs" class="badge badge-warning">{{ result.nutrition.carbohydrates }}g Carbs</span>
+            <span id="calc_fat" class="badge badge-danger">{{ result.nutrition.fat }}g Fat</span>
+        </div>
+        <button type="submit" class="btn btn-success" style="padding: 0.8rem 2rem; font-size: 1rem;">Save Meal to My Food Log</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

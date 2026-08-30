@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Wellness Track — Care Plus{% endblock %}
+{% block header_title %}Wellness Tracking (Water, Exercise, Sleep){% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="color: var(--primary-color); font-size: 1.75rem;">Wellness & Daily Tracking</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor daily hydration, exercise activities, and sleep quality.</p>
+</div>
+
+<div class="grid-2">
+    <!-- Hydration Tracker -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--accent-color);">Hydration Tracking</h3>
+        <form method="POST" action="{{ url_for('wellness') }}" style="margin-bottom: 1rem;">
+            <input type="hidden" name="record_type" value="water">
+            <div class="form-group">
+                <label class="form-label" for="amount_ml">Log Water Intake (ml)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" step="50" id="amount_ml" name="amount_ml" class="form-control" value="250" min="50" max="2000" required>
+                    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">+ Log Water</button>
+                </div>
+            </div>
+        </form>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Recent Water Logs</h4>
+        {% if water %}
+        <ul style="list-style: none; font-size: 0.85rem;">
+            {% for w in water[:5] %}
+            <li style="padding: 0.4rem 0; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between;">
+                <span>{{ w.amount_ml|int }} ml</span>
+                <span style="color: var(--text-muted);">{{ w.recorded_at|app_time('%m-%d %H:%M') }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-muted);">No water entries logged yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Sleep Tracker -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--secondary-color);">Sleep Tracking</h3>
+        <form method="POST" action="{{ url_for('wellness') }}">
+            <input type="hidden" name="record_type" value="sleep">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="sleep_time">Sleep Time</label>
+                    <input type="datetime-local" id="sleep_time" name="sleep_time" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="wake_time">Wake Time</label>
+                    <input type="datetime-local" id="wake_time" name="wake_time" class="form-control" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Log Sleep Record
+            </button>
+        </form>
+
+        <h4 style="font-size: 0.95rem; margin-top: 1.25rem; margin-bottom: 0.5rem; color: var(--text-muted);">Recent Sleep Logs</h4>
+        {% if sleep %}
+        <ul style="list-style: none; font-size: 0.85rem;">
+            {% for s in sleep[:4] %}
+            <li style="padding: 0.4rem 0; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between;">
+                <span>{{ s.duration_hours }} hours</span>
+                <span style="color: var(--text-muted);">{{ s.date.strftime('%Y-%m-%d') }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-muted);">No sleep entries logged yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 0.5rem; color: var(--accent-color);">Daily Wellness Reminders</h3>
+    <p class="card-sub">Edit or delete activities. Reminders use {{ reminder_timezone }} time.</p>
+    <form method="POST" action="{{ url_for('wellness') }}">
+        <input type="hidden" name="record_type" value="reminders">
+        <div class="table-responsive">
+            <table class="custom-table" style="font-size: 0.85rem;">
+                <thead><tr><th>Time</th><th>Micro-activity</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for reminder in wellness_reminders %}
+                    <tr>
+                        <input type="hidden" name="reminder_keys" value="{{ reminder.id }}">
+                        <td><input type="time" name="reminder_time_{{ reminder.id }}" value="{{ reminder.time }}" class="form-control" required></td>
+                        <td><input type="text" name="reminder_name_{{ reminder.id }}" value="{{ reminder.name }}" class="form-control" maxlength="120" required></td>
+                        <td>{% if reminder.db_id %}<button type="submit" formaction="{{ url_for('delete_wellness_reminder', reminder_id=reminder.db_id) }}" formmethod="POST" class="btn btn-danger" onclick="return confirm('Delete this wellness reminder?');">Delete</button>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Reminder Schedule</button>
+    </form>
+    <form method="POST" action="{{ url_for('clear_wellness_reminders') }}" style="margin-top: 0.75rem;">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Clear all wellness reminders?');">Clear All Reminders</button>
+    </form>
+    <form method="POST" action="{{ url_for('wellness') }}" style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <input type="hidden" name="record_type" value="add_reminder">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="new_reminder_name">New activity</label>
+                <input type="text" id="new_reminder_name" name="new_reminder_name" class="form-control" maxlength="120" placeholder="Example: Take a short walk" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="new_reminder_time">Reminder time</label>
+                <input type="time" id="new_reminder_time" name="new_reminder_time" class="form-control" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-secondary">Add Activity Reminder</button>
+    </form>
+</div>
+
+<!-- Exercise History -->
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Exercise Activity History</h3>
+    {% if exercise %}
+    <div class="table-responsive">
+        <table class="custom-table" style="font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Activity Type</th>
+                    <th>Duration</th>
+                    <th>Calories Burned</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in exercise %}
+                <tr>
+                    <td>{{ e.created_at|app_time('%Y-%m-%d') }}</td>
+                    <td><strong>{{ e.activity_type }}</strong></td>
+                    <td>{{ e.duration_minutes }} mins</td>
+                    <td><span class="badge badge-success">{{ e.calories_burned }} kcal</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No exercise activities recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

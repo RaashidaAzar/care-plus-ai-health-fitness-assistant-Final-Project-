@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Food Log History — Care Plus{% endblock %}
+{% block header_title %}My Food Log History{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="color: var(--primary-color); font-size: 1.75rem;">Food & Calorie Log</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Review food intake, calories consumed, and calories burned.</p>
+    </div>
+    <a href="{{ url_for('food_recognition_page') }}" class="btn btn-primary">Scan New Meal</a>
+</div>
+
+<div class="card">
+    {% if records %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Food Item</th>
+                    <th>Meal Category</th>
+                    <th>Portion (g)</th>
+                    <th>Calories (kcal)</th>
+                    <th>Protein (g)</th>
+                    <th>Carbs (g)</th>
+                    <th>Fat (g)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.consumed_at|app_time('%Y-%m-%d %H:%M') }}</td>
+                    <td><strong>{{ r.food_name }}</strong></td>
+                    <td><span class="badge badge-info">{{ r.meal_name or 'Meal' }}</span></td>
+                    <td>{{ r.serving_amount_g }}g</td>
+                    <td><span class="badge badge-success">{{ r.calories }} kcal</span></td>
+                    <td>{{ r.protein }}g</td>
+                    <td>{{ r.carbohydrates }}g</td>
+                    <td>{{ r.fat }}g</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_food', food_id=r.id) }}" style="display: inline;" onsubmit="return confirm('Delete this food log entry?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <h3>No meals recorded in your food log yet</h3>
+        <p style="margin-top: 0.5rem;">Use the AI Food Recognition feature to scan a meal and log your nutrition.</p>
+        <a href="{{ url_for('food_recognition_page') }}" class="btn btn-primary" style="margin-top: 1.25rem;">Scan Food Image</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid-4" style="margin-top: 1.5rem;">
+    <div class="card"><div class="card-title">Today's Intake</div><div class="card-value">{{ today_consumed|round(1) }} <span style="font-size: 1rem;">kcal</span></div></div>
+    <div class="card"><div class="card-title">Today's Burned</div><div class="card-value" style="color: var(--secondary-color);">{{ today_burned|round(1) }} <span style="font-size: 1rem;">kcal</span></div></div>
+    <div class="card"><div class="card-title">Net Calories</div><div class="card-value" style="color: var(--secondary-color);">{{ (today_consumed - today_burned)|round(1) }} <span style="font-size: 1rem;">kcal</span></div></div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Today's Intake vs Burned</h3>
+    <div style="height: 240px; position: relative;"><canvas id="foodCalorieChart"></canvas></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('{{ url_for("progress_chart_data", days=1) }}')
+        .then(response => response.json())
+        .then(data => new Chart(document.getElementById('foodCalorieChart'), {
+            type: 'bar',
+            data: { labels: data.labels, datasets: [
+                { label: 'Calories Consumed', data: data.consumed, backgroundColor: '#AA4488' },
+                { label: 'Calories Burned', data: data.burned, backgroundColor: '#602A77' }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false }
+        }));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Register — Care Plus{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 3rem auto;">
+    <div class="card" style="padding: 2.25rem;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="{{ url_for('static', filename='images/care-plus-logo.png') }}" alt="Care Plus Logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem;">
+            <h2>Care Plus</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Create Your Account</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Create a strong password" required autocomplete="new-password">
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="gender">Gender</label>
+                    <select id="gender" name="gender" class="form-select" required>
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="birth_year">Birth Year</label>
+                    <input type="number" id="birth_year" name="birth_year" class="form-control" min="1900" max="{{ now_year - 18 }}" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 0.5rem;">
+                Create Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+            Already have a Care Plus account? <a href="{{ url_for('login') }}" style="color: var(--primary-color); font-weight: 600;">Log In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

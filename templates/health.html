@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Health & BMI — Care Plus{% endblock %}
+{% block header_title %}Health Monitoring & BMI Track{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="color: var(--primary-color); font-size: 1.75rem;">Health Monitoring & BMI History</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Track Weight, Height, BMI, Blood Pressure, Blood Sugar, Cholesterol, and Heart Rate.</p>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom: 1.75rem;">
+    <!-- Record Form -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Record New Measurement</h3>
+        <form method="POST" action="{{ url_for('health') }}">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="weight_kg">Weight (kg)</label>
+                    <input type="number" step="0.1" id="weight_kg" name="weight_kg" class="form-control" value="{{ profile.weight_kg or 70.0 }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="height_cm">Height (cm)</label>
+                    <input type="number" step="0.5" id="height_cm" name="height_cm" class="form-control" value="{{ profile.height_cm or 170.0 }}" required>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="blood_pressure">Blood Pressure (mmHg)</label>
+                    <input type="text" id="blood_pressure" name="blood_pressure" class="form-control" placeholder="120/80">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="blood_sugar">Fasting Blood Sugar (mg/dL)</label>
+                    <input type="text" id="blood_sugar" name="blood_sugar" class="form-control" placeholder="95">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="cholesterol">Total Cholesterol (mg/dL)</label>
+                    <input type="text" id="cholesterol" name="cholesterol" class="form-control" placeholder="185">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="heart_rate">Resting Heart Rate (bpm)</label>
+                    <input type="text" id="heart_rate" name="heart_rate" class="form-control" placeholder="72">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="notes">Notes / Observations</label>
+                <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. Feeling energetic after morning walk">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Measurement & Update BMI</button>
+        </form>
+    </div>
+
+    <!-- Latest vitals summary -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Latest Vitals Summary</h3>
+        {% if records %}
+        {% set r = records[0] %}
+        <div class="grid-4" style="margin-bottom: 0;">
+            <div style="padding: 1rem; background: var(--primary-light); border-radius: var(--radius-sm); text-align: center;">
+                <div class="card-title">BMI</div>
+                <div class="card-value" style="font-size: 1.6rem;">{{ r.bmi }}</div>
+            </div>
+            <div style="padding: 1rem; background: var(--primary-light); border-radius: var(--radius-sm); text-align: center;">
+                <div class="card-title">Weight</div>
+                <div class="card-value" style="font-size: 1.6rem;">{{ r.weight_kg }}<span style="font-size: 0.9rem;"> kg</span></div>
+            </div>
+            <div style="padding: 1rem; background: var(--primary-light); border-radius: var(--radius-sm); text-align: center;">
+                <div class="card-title">Blood Pressure</div>
+                <div class="card-value" style="font-size: 1.4rem;">{{ r.blood_pressure or '—' }}</div>
+            </div>
+            <div style="padding: 1rem; background: var(--primary-light); border-radius: var(--radius-sm); text-align: center;">
+                <div class="card-title">Heart Rate</div>
+                <div class="card-value" style="font-size: 1.6rem;">{{ r.heart_rate or '—' }}<span style="font-size: 0.9rem;"> bpm</span></div>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top: 1rem; margin-bottom: 0;">
+            <div style="padding: 1rem; background: var(--bg-color); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div class="card-title">Blood Sugar</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-color);">{{ r.blood_sugar or '—' }} <span style="font-size: 0.85rem; font-weight: 500;">mg/dL</span></div>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-color); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div class="card-title">Cholesterol</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-color);">{{ r.cholesterol or '—' }} <span style="font-size: 0.85rem; font-weight: 500;">mg/dL</span></div>
+            </div>
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">Last recorded: {{ r.recorded_at|app_time('%Y-%m-%d %H:%M') }}</div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <p>No measurements recorded yet.</p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem;">Use the form to log your first health measurement.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Full Records Table -->
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">All Health Measurements</h3>
+    {% if records %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Weight</th>
+                    <th>Height</th>
+                    <th>BMI</th>
+                    <th>Blood Pressure</th>
+                    <th>Blood Sugar</th>
+                    <th>Cholesterol</th>
+                    <th>Heart Rate</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.recorded_at|app_time('%Y-%m-%d %H:%M') }}</td>
+                    <td><strong>{{ r.weight_kg }} kg</strong></td>
+                    <td>{{ r.height_cm }} cm</td>
+                    <td><span class="badge badge-info">{{ r.bmi }}</span></td>
+                    <td>{{ r.blood_pressure or '—' }}</td>
+                    <td>{{ r.blood_sugar or '—' }} mg/dL</td>
+                    <td>{{ r.cholesterol or '—' }} mg/dL</td>
+                    <td>{{ r.heart_rate or '—' }} bpm</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_health', record_id=r.id) }}" style="display: inline;" onsubmit="return confirm('Delete this measurement?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No health measurements recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

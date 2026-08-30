@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Care Plus{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <section class="landing-hero">
+        <div class="landing-copy">
+            <div class="landing-kicker">CARE PLUS / PERSONAL HEALTH DESK</div>
+            <h1>Care Plus<br><span>health, made clear.</span></h1>
+            <p>Your AI-Based Personal Health & Fitness Assistant Tailored for Adults Aged 40+</p>
+            <div class="landing-actions">
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Create Free Account</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline">Account Sign In</a>
+            </div>
+            <div class="landing-note"><strong>Care Plus</strong><span>AI-Based Personal Health & Fitness Assistant for Adults Aged 40+</span></div>
+        </div>
+        <div class="landing-preview" aria-label="Care Plus dashboard preview">
+            <div class="preview-top"><span class="preview-logo">CP</span><span>Overview</span><span class="preview-avatar">A</span></div>
+            <div class="preview-greeting">Your health overview</div>
+            <div class="preview-metrics"><div><small>Calories Consumed</small><strong>Today</strong><span>Food Intake</span></div><div><small>Hydration Intake</small><strong>Daily</strong><span>Wellness tracking</span></div></div>
+            <div class="preview-chart"><div class="preview-chart-label">Health overview</div><div class="chart-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+            <div class="preview-footer"><span>Care Plus</span><strong>Personalized health tracking</strong><b>CP</b></div>
+        </div>
+    </section>
+    <section class="landing-features">
+        <div><span class="feature-index">01</span><h3>AI Food Recognition</h3><p>Instant CNN EfficientNetB0 meal identification with accurate 100g serving nutrition database breakdown.</p></div>
+        <div><span class="feature-index">02</span><h3>Calorie Burn AI</h3><p>Predict exact calorie burn tailored to age, heart rate, duration, and body temperature using machine learning.</p></div>
+        <div><span class="feature-index">03</span><h3>Health & Medication</h3><p>Monitor BMI trends, Blood Pressure, Blood Sugar, Heart Rate, and medication schedules with timely reminders.</p></div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Link Expired or Revoked — Care Plus</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/care-plus-logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; text-align: center;">
+    <div class="card" style="max-width: 500px; padding: 3rem 2rem;">
+        <img src="{{ url_for('static', filename='images/care-plus-logo.png') }}" alt="Care Plus Logo" style="width: 80px; height: 80px; margin-bottom: 1rem;">
+        <h2 style="color: #ef4444; margin-bottom: 0.5rem;">Shared Report Link Unavailable</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            This report sharing link has expired or has been revoked by the account owner.
+        </p>
+        <a href="{{ url_for('landing') }}" class="btn btn-primary">Return to Care Plus Home</a>
+    </div>
+</body>
+</html>

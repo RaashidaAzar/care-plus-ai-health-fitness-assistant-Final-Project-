@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Medications — Care Plus{% endblock %}
+{% block header_title %}Medication Management & Reminders{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="color: var(--primary-color); font-size: 1.75rem;">Medication Management</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your prescription schedules, track doses taken, and maintain an active medication log.</p>
+    <p style="color: var(--text-muted); font-size: 0.85rem;">Reminder time: <strong id="localClock">--:--</strong></p>
+</div>
+
+<div class="grid-2">
+    <!-- Add Medication Form -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Add New Medication</h3>
+        <form method="POST" action="{{ url_for('medications') }}">
+            <div class="form-group">
+                <label class="form-label" for="name">Medication Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Amlodipine, Metformin, Multivitamin" required>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="dosage">Dosage</label>
+                    <input type="text" id="dosage" name="dosage" class="form-control" placeholder="e.g. 5mg, 500mg, 1 tablet">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="time">Scheduled Time</label>
+                    <input type="time" id="time" name="time" class="form-control" step="60" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="frequency">Frequency</label>
+                <select id="frequency" name="frequency" class="form-select">
+                    <option value="Once Daily" selected>Once Daily</option>
+                    <option value="Twice Daily">Twice Daily</option>
+                    <option value="Three Times Daily">Three Times Daily</option>
+                    <option value="Every 8 Hours">Every 8 Hours</option>
+                    <option value="As Needed (PRN)">As Needed (PRN)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="notes">Notes / Special Instructions</label>
+                <input type="text" id="notes" name="notes" class="form-control" placeholder="Take after breakfast with water">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; width: 100%;">
+                Save Medication
+            </button>
+        </form>
+    </div>
+
+    <!-- Active Medication Schedule -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Active Medication Schedule</h3>
+        {% if meds %}
+        <div class="table-responsive">
+            <table class="custom-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Medication</th>
+                        <th>Dosage</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in meds %}
+                    <tr>
+                        <td>
+                            <strong>{{ m.name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ m.frequency }}</div>
+                        </td>
+                        <td>{{ m.dosage or '-' }}</td>
+                        <td><span class="badge badge-info medication-time" data-medication-id="{{ m.id }}" data-medication-name="{{ m.name }}" data-scheduled-time="{{ m.time or '' }}">{{ m.time or 'Not set' }}</span></td>
+                        <td style="white-space: nowrap;">
+                            <form method="POST" action="{{ url_for('mark_medication_taken', med_id=m.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Taken</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('delete_medication', med_id=m.id) }}" style="display: inline;" onsubmit="return confirm('Remove medication?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No active medications in your schedule.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Medication History Log -->
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Medication Adherence History</h3>
+    {% if logs %}
+    <div class="table-responsive">
+        <table class="custom-table" style="font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th>Taken Date & Time</th>
+                    <th>Medication Name</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.taken_at|app_time('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td><strong>{{ log.medication.name if log.medication else 'Medication' }}</strong></td>
+                    <td><span class="badge badge-success">Dose Taken</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No dose logs recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

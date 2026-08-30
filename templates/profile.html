@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Setup — Care Plus{% endblock %}
+{% block header_title %}User Profile Setup{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="color: var(--primary-color); font-size: 1.75rem;">Profile Setup</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">These details power your BMI, calorie estimates, and health records. Update them whenever your information changes.</p>
+</div>
+
+<form method="POST" action="{{ url_for('profile') }}" id="profileForm"></form>
+
+<div class="grid-2">
+    <!-- Left column: Account Identity + Preferences -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="card">
+            <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Account Identity</h3>
+            <div class="form-group">
+                <label class="form-label" for="full_name">Full Name</label>
+                <input type="text" id="full_name" name="full_name" form="profileForm" class="form-control" value="{{ profile.full_name or current_user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" name="username" form="profileForm" class="form-control" value="{{ current_user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" id="email" name="email" form="profileForm" class="form-control" value="{{ current_user.email }}" required>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Preferences</h3>
+            <div class="form-group">
+                <label class="form-label" for="activity_level">Physical Activity Level</label>
+                <select id="activity_level" name="activity_level" form="profileForm" class="form-select">
+                    <option value="sedentary" {% if profile.activity_level == 'sedentary' %}selected{% endif %}>Sedentary (Little or no exercise)</option>
+                    <option value="light" {% if profile.activity_level == 'light' %}selected{% endif %}>Lightly Active (1&ndash;3 days/week)</option>
+                    <option value="moderate" {% if profile.activity_level == 'moderate' %}selected{% endif %}>Moderately Active (3&ndash;5 days/week)</option>
+                    <option value="very_active" {% if profile.activity_level == 'very_active' %}selected{% endif %}>Very Active (6&ndash;7 days/week)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="theme_preference">Theme</label>
+                <select id="theme_preference" name="theme_preference" form="profileForm" class="form-select">
+                    <option value="light" {% if profile.theme_preference != 'dark' %}selected{% endif %}>Light mode</option>
+                    <option value="dark" {% if profile.theme_preference == 'dark' %}selected{% endif %}>Dark mode</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column: Personal Details + Save -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="card">
+            <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Personal Details</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="birth_year">Birth Year</label>
+                    <input type="number" id="birth_year" name="birth_year" form="profileForm" class="form-control" value="{{ profile.birth_year or (now_year - (profile.age or 45)) }}" min="1900" max="{{ now_year - 18 }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="gender">Gender</label>
+                    <select id="gender" name="gender" form="profileForm" class="form-select">
+                        <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>Male</option>
+                        <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>Female</option>
+                        <option value="other" {% if profile.gender == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="height_cm">Height (cm)</label>
+                    <input type="number" step="0.5" id="height_cm" name="height_cm" form="profileForm" class="form-control" value="{{ profile.height_cm or 170.0 }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="weight_kg">Weight (kg)</label>
+                    <input type="number" step="0.5" id="weight_kg" name="weight_kg" form="profileForm" class="form-control" value="{{ profile.weight_kg or 70.0 }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <button type="submit" form="profileForm" class="btn btn-primary" style="width: 100%;">Save Profile Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

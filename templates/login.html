@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Care Plus{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 3rem auto;">
+    <div class="card" style="padding: 2.25rem;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="{{ url_for('static', filename='images/care-plus-logo.png') }}" alt="Care Plus Logo" style="width: 70px; height: 70px; margin-bottom: 0.5rem;">
+            <h2>Care Plus</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Sign In to Your Health Dashboard</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label class="form-label" for="identifier">Username or Email</label>
+                <input type="text" id="identifier" name="identifier" class="form-control" placeholder="Enter username or email" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 0.5rem;">
+                Sign In
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+            Don't have an account yet? <a href="{{ url_for('register') }}" style="color: var(--primary-color); font-weight: 600;">Register Here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

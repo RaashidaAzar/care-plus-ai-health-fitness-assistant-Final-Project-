@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Care Plus — Shared Health Report Summary</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/care-plus-logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: #f8fafc; color: #0f172a; padding: 2rem 1rem;">
+    <div style="max-width: 850px; margin: 0 auto; background: #ffffff; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #6f42c1; padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <img src="{{ url_for('static', filename='images/care-plus-logo.png') }}" alt="Care Plus Logo" style="width: 54px; height: 54px;">
+                <div>
+                    <h1 style="font-size: 1.8rem; color: #4c1d95; margin: 0;">Care Plus</h1>
+                    <div style="font-size: 0.85rem; color: #6b7280;">Secure Read-Only Health Report Summary</div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 0.85rem; color: #6b7280;">
+                <div><strong>Token ID:</strong> {{ share.token[:12] }}...</div>
+                <div><strong>Expires At:</strong> {{ share.expires_at|app_time('%B %d, %Y %H:%M') }}</div>
+            </div>
+        </div>
+
+        <div style="background-color: #f3e8ff; border-left: 4px solid #6f42c1; padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 2rem;">
+            <h3 style="color: #4c1d95; font-size: 1.1rem; margin-bottom: 0.25rem;">Health Summary for: {{ profile.full_name if profile else user.username }}</h3>
+            <p style="font-size: 0.85rem; color: #6b7280; margin: 0;">Age: {{ profile.age if profile else 'N/A' }} | Gender: {{ profile.gender.capitalize() if profile and profile.gender else 'N/A' }} | Height: {{ profile.height_cm if profile else 'N/A' }} cm | Weight: {{ profile.weight_kg if profile else 'N/A' }} kg</p>
+        </div>
+
+        <h3 style="color: #6f42c1; font-size: 1.2rem; margin-bottom: 0.75rem;">Recent Vital Measurements</h3>
+        {% if latest_health %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.8rem; color: #6b7280;">BMI Rating</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #6f42c1;">{{ latest_health.bmi }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.8rem; color: #6b7280;">Blood Pressure</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #06b6d4;">{{ latest_health.blood_pressure or '120/80' }}</div>
+            </div>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.8rem; color: #6b7280;">Blood Sugar</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #10b981;">{{ latest_health.blood_sugar or '95' }} mg/dL</div>
+            </div>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.8rem; color: #6b7280;">Heart Rate</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #ef4444;">{{ latest_health.heart_rate or '72' }} bpm</div>
+            </div>
+        </div>
+        {% else %}
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">No recorded health measurements available.</p>
+        {% endif %}
+
+        <h3 style="color: #6f42c1; font-size: 1.2rem; margin-bottom: 0.75rem;">Food Intake Log (Last 30 Days)</h3>
+        {% if food_records %}
+        <table class="custom-table" style="font-size: 0.85rem; margin-bottom: 2rem;">
+            <thead>
+                <tr>
+                    <th>Consumed Date</th>
+                    <th>Food Item</th>
+                    <th>Portion</th>
+                    <th>Calories</th>
+                    <th>Protein</th>
+                    <th>Carbs</th>
+                    <th>Fat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in food_records[:10] %}
+                <tr>
+                    <td>{{ f.consumed_at|app_time('%Y-%m-%d') }}</td>
+                    <td><strong>{{ f.food_name }}</strong></td>
+                    <td>{{ f.serving_amount_g }}g</td>
+                    <td><span class="badge badge-success">{{ f.calories }} kcal</span></td>
+                    <td>{{ f.protein }}g</td>
+                    <td>{{ f.carbohydrates }}g</td>
+                    <td>{{ f.fat }}g</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">No meals logged for this period.</p>
+        {% endif %}
+
+        <div class="disclaimer-banner">
+            <strong>Health Disclaimer:</strong> Care Plus provides general health and fitness tracking for adults aged 40+. AI predictions and nutrition estimates are for educational guidance and do not replace professional medical advice or diagnosis.
+        </div>
+    </div>
+</body>
+</html>

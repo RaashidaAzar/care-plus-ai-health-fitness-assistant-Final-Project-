@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Calorie Burn AI — Care Plus{% endblock %}
+{% block header_title %}AI Calorie Burn Prediction{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="color: var(--primary-color); font-size: 1.75rem;">AI Calorie Burn Prediction</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Predict calories burned during physical activity using our trained scikit-learn Random Forest model.</p>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom: 1.75rem;">
+    <!-- Prediction Input Form -->
+    <div class="card">
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Prediction Inputs</h3>
+        <form method="POST" action="{{ url_for('calorie_burn') }}">
+            <div class="form-group">
+                <label class="form-label" for="activity_type">Activity Type</label>
+                <select id="activity_type" name="activity_type" class="form-select">
+                    <option>Walking</option>
+                    <option>Light Stretching</option>
+                    <option>Yoga</option>
+                    <option>House Chores</option>
+                    <option>Sitting Work Break Movement</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Registered Profile</label>
+                <div class="form-control" style="background: var(--bg-color); color: var(--text-muted);">{{ profile.gender|title }}, {{ profile.age }} years</div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="height">Height (cm)</label>
+                    <input type="number" step="0.5" id="height" name="height" class="form-control" value="{{ profile.height_cm or 170.0 }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="weight">Weight (kg)</label>
+                    <input type="number" step="0.5" id="weight" name="weight" class="form-control" value="{{ profile.weight_kg or 70.0 }}" required>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="duration_minutes">Duration (Minutes)</label>
+                    <input type="number" step="1" id="duration_minutes" name="duration_minutes" class="form-control" value="30" min="1" max="300" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="heart_rate">Heart Rate (bpm)</label>
+                    <input type="number" step="1" id="heart_rate" name="heart_rate" class="form-control" value="115" min="50" max="220" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="body_temp">Peak Body Temperature (°C)</label>
+                <input type="number" step="0.1" id="body_temp" name="body_temp" class="form-control" value="38.5" min="36.0" max="42.0" required>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Standard workout body temp is 38.0°C – 39.0°C.</div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Run AI Calorie Burn Prediction</button>
+        </form>
+    </div>
+
+    <!-- Result / Placeholder -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: {% if result and result.estimate is not none %}flex-start{% else %}center{% endif %}; align-items: {% if result and result.estimate is not none %}stretch{% else %}center{% endif %}; text-align: {% if result and result.estimate is not none %}left{% else %}center{% endif %};">
+        {% if result and result.estimate is not none %}
+        <h3 style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--primary-light);">Prediction Result</h3>
+        <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem;">Estimated Calories Burned</div>
+            <div style="font-size: 3rem; font-weight: 800; color: var(--primary-color); line-height: 1.1;">
+                {{ result.estimate }} <span style="font-size: 1.2rem; font-weight: 600;">kcal</span>
+            </div>
+            <span class="badge badge-success" style="margin-top: 0.5rem;">AI Machine Learning Estimate</span>
+        </div>
+        <div style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; margin-bottom: 1.25rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <div><span style="color: var(--text-muted);">Duration</span><br><strong>{{ result.inputs.duration_minutes }} mins</strong></div>
+                <div><span style="color: var(--text-muted);">Activity</span><br><strong>{{ result.inputs.activity_type }}</strong></div>
+                <div><span style="color: var(--text-muted);">Heart Rate</span><br><strong>{{ result.inputs.heart_rate }} bpm</strong></div>
+                <div><span style="color: var(--text-muted);">Body Temp</span><br><strong>{{ result.inputs.body_temp }} °C</strong></div>
+            </div>
+        </div>
+        <div style="background: var(--primary-light); padding: 1.25rem; border-radius: var(--radius-md);">
+            <h4 style="margin-bottom: 0.75rem; color: var(--primary-color);">Save Activity to Log</h4>
+            <form method="POST" action="{{ url_for('save_activity') }}">
+                <input type="hidden" name="duration_minutes" value="{{ result.inputs.duration_minutes }}">
+                <input type="hidden" name="calories_burned" value="{{ result.estimate }}">
+                <div class="grid-2" style="margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label" for="save_activity_type">Activity Type</label>
+                        <select id="save_activity_type" name="activity_type" class="form-select">
+                            <option value="Brisk Walking">Brisk Walking</option>
+                            <option value="Jogging / Running">Jogging / Running</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Swimming">Swimming</option>
+                            <option value="Yoga / Stretching">Yoga / Stretching</option>
+                            <option value="Gym Strength Training">Gym Strength Training</option>
+                            <option value="General Exercise" selected>General Exercise</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="notes">Notes (Optional)</label>
+                        <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. Morning park walk">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Activity Record</button>
+            </form>
+        </div>
+        {% else %}
+        <div style="color: var(--text-muted); padding: 2rem 1rem;">
+            <h3 style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem;">No prediction yet</h3>
+            <p style="font-size: 0.9rem;">Fill in the form and run the prediction to see your estimated calorie burn here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

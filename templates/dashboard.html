@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Care Plus{% endblock %}
+{% block header_title %}Care Plus Dashboard{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.8rem; color: var(--primary-color);">Welcome back, {{ profile.full_name or current_user.username }}!</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Here is your personalized health & fitness overview for today.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('food_recognition_page') }}" class="btn btn-primary">Scan Food Image</a>
+        <a href="{{ url_for('calorie_burn') }}" class="btn btn-outline">Predict Calorie Burn</a>
+    </div>
+</div>
+
+<!-- Summary Metric Cards -->
+<div class="grid-4 dashboard-metrics">
+    <div class="card">
+        <div class="card-title">Calories Consumed</div>
+        <div class="card-value">{{ total_calories }} <span style="font-size: 1.1rem; font-weight: 500;">kcal</span></div>
+        <div class="card-sub">Today's Food Intake</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Calories Burned</div>
+        <div class="card-value" style="color: var(--secondary-color);">{{ total_burned }} <span style="font-size: 1.1rem; font-weight: 500;">kcal</span></div>
+        <div class="card-sub">Exercise & Activity Burn</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Current BMI</div>
+        <div class="card-value" style="color: var(--secondary-color);">
+            {{ latest_bmi }}
+        </div>
+        <div class="card-sub">
+            Category: <span class="badge badge-{{ bmi_badge }}">{{ bmi_cat }}</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Hydration Intake</div>
+        <div class="card-value" style="color: var(--accent-color);">{{ (today_water / 1000.0)|round(2) }} <span style="font-size: 1.1rem; font-weight: 500;">L</span></div>
+        <div class="card-sub">{{ today_water|int }} ml logged today</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Activity Streak</div>
+        <div class="card-value" style="color: var(--accent-color);">{{ activity_streak }} <span style="font-size: 1.1rem; font-weight: 500;">days</span></div>
+        <div class="card-sub">{{ streak_message }}</div>
+    </div>
+</div>
+
+<div class="card chart-card" style="margin-bottom: 1.75rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h3>Health overview</h3>
+            <p class="card-sub" id="dashboardRangeLabel">Today</p>
+        </div>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline dashboard-range" data-days="1">Today</button>
+            <button type="button" class="btn btn-outline dashboard-range" data-days="7">Weekly</button>
+            <button type="button" class="btn btn-outline dashboard-range" data-days="30">Monthly</button>
+            <button type="button" class="btn btn-outline dashboard-range" data-days="365">Yearly</button>
+        </div>
+    </div>
+    <div class="grid-2" style="margin-top: 1rem;">
+        <div style="height: 240px; position: relative;"><canvas id="dashboardCaloriesChart"></canvas></div>
+        <div style="height: 240px; position: relative;"><canvas id="dashboardWellnessChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Quick Action Grid & Recent Activity -->
+<div class="grid-2">
+    <!-- Quick Shortcuts & Medication Schedule -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>Active Medications</span>
+            <a href="{{ url_for('medications') }}" class="btn btn-outline" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">View All</a>
+        </h3>
+        {% if active_meds %}
+        <ul style="list-style: none;">
+            {% for med in active_meds %}
+            <li style="padding: 0.65rem 0; border-bottom: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>{{ med.name }}</strong> ({{ med.dosage or 'Dosage not set' }})
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Scheduled: {{ med.time or 'Daily' }} | {{ med.frequency or 'Regular' }}</div>
+                </div>
+                <form method="POST" action="{{ url_for('mark_medication_taken', med_id=med.id) }}">
+                    <button type="submit" class="btn btn-success" style="padding: 0.3rem 0.65rem; font-size: 0.8rem;">Mark Taken</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 1rem 0;">No active medications scheduled. You can add your medications in the Medication section.</p>
+        {% endif %}
+
+        <!-- Quick Water Add Button -->
+        <div style="margin-top: 1.5rem; background-color: var(--primary-light); padding: 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>Quick Hydration Tracker</strong>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Add a standard 250ml glass of water</div>
+            </div>
+            <form method="POST" action="{{ url_for('wellness') }}">
+                <input type="hidden" name="record_type" value="water">
+                <input type="hidden" name="amount_ml" value="250">
+                <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">+ 250ml Water</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Today's Meal Summary -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>Today's Meals</span>
+            <a href="{{ url_for('food_history') }}" class="btn btn-outline" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">Food Log</a>
+        </h3>
+        {% if today_meals %}
+        <div class="table-responsive">
+            <table class="custom-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Food Item</th>
+                        <th>Portion</th>
+                        <th>Calories</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in today_meals %}
+                    <tr>
+                        <td><strong>{{ m.food_name }}</strong></td>
+                        <td>{{ m.serving_amount_g }}g</td>
+                        <td><span class="badge badge-success">{{ m.calories }} kcal</span></td>
+                        <td>{{ m.consumed_at|app_time('%H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+            <p>No meals recorded today yet.</p>
+            <a href="{{ url_for('food_recognition_page') }}" class="btn btn-primary" style="margin-top: 0.75rem; font-size: 0.85rem;">Upload Food Image</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card chart-card">
+    <div class="chart-heading">
+        <div>
+            <h3>Macro balance</h3>
+            <p class="card-sub">Today's logged food by macronutrient</p>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem;">
+            <span><strong style="color:#AA4488;">{{ macro_totals.protein }}g</strong> Protein</span>
+            <span><strong style="color:#602A77;">{{ macro_totals.carbohydrates }}g</strong> Carbs</span>
+            <span><strong style="color:#C4709A;">{{ macro_totals.fat }}g</strong> Fat</span>
+            <span><strong style="color:#211640;">{{ total_calories }} kcal</strong> Calories</span>
+        </div>
+    </div>
+    <div class="donut-wrap">
+        <canvas id="macroDonut"></canvas>
+        <div class="donut-total"><strong>{{ total_calories }}</strong><span>kcal</span></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const canvas = document.getElementById('macroDonut');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const protein = {{ macro_totals.protein }};
+    const carbs = {{ macro_totals.carbohydrates }};
+    const fat = {{ macro_totals.fat }};
+    const cals = {{ total_calories }};
+    const hasData = [protein, carbs, fat, cals].some(v => v > 0);
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Calories (kcal)', 'Protein (g)', 'Carbs (g)', 'Fat (g)'],
+            datasets: [{ data: hasData ? [cals, protein, carbs, fat] : [1,1,1,1], backgroundColor: ['#211640','#AA4488','#602A77','#C4709A'], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
+    });
+
+    let caloriesChart;
+    let wellnessChart;
+    const rangeLabels = { 1: 'Today', 7: 'Weekly', 30: 'Monthly', 365: 'Yearly' };
+    const loadDashboardCharts = (days) => fetch(`/progress/chart-data?days=${days}`)
+        .then((response) => response.json())
+        .then((data) => {
+            document.getElementById('dashboardRangeLabel').textContent = rangeLabels[days];
+            if (caloriesChart) caloriesChart.destroy();
+            if (wellnessChart) wellnessChart.destroy();
+            caloriesChart = new Chart(document.getElementById('dashboardCaloriesChart'), {
+                type: 'bar', data: { labels: data.labels, datasets: [
+                    { label: 'Calories in', data: data.consumed, backgroundColor: '#AA4488' },
+                    { label: 'Calories out', data: data.burned, backgroundColor: '#602A77' }
+                ]}, options: { responsive: true, maintainAspectRatio: false }
+            });
+            wellnessChart = new Chart(document.getElementById('dashboardWellnessChart'), {
+                type: 'line', data: { labels: data.labels, datasets: [
+                    { label: 'Water (L)', data: data.water, borderColor: '#EDB9BD', backgroundColor: '#EDB9BD', pointBackgroundColor: '#EDB9BD', pointBorderColor: '#EDB9BD', tension: 0.3 },
+                    { label: 'Weight (kg)', data: data.weights, borderColor: '#602A77', backgroundColor: '#602A77', pointBackgroundColor: '#602A77', pointBorderColor: '#602A77', tension: 0.3, yAxisID: 'weight' }
+                ]}, options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { usePointStyle: true, pointStyle: 'circle' } } },
+                    scales: { weight: { position: 'right' } } }
+            });
+        });
+    document.querySelectorAll('.dashboard-range').forEach((button) => button.addEventListener('click', () => loadDashboardCharts(Number(button.dataset.days))));
+    loadDashboardCharts(1);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Health Reports — Care Plus{% endblock %}
+{% block header_title %}PDF Health Reports & Secure Sharing{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="color: var(--primary-color); font-size: 1.75rem;">Health Reports & Secure Sharing</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Generate professional PDF health summaries containing your nutrition, BMI, vitals, wellness, and medication history.</p>
+</div>
+
+<div class="grid-2">
+    <!-- Generate & Download PDF Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Generate PDF Health Report</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Exports a formatted PDF containing your Care Plus logo branding, personal health records, food logs, wellness summary, active medications, and health disclaimer.
+        </p>
+
+        <form method="POST" action="{{ url_for('reports') }}" style="margin-bottom: 1rem;">
+            <div class="form-group">
+                <label class="form-label" for="range_days">Select Time Period Range</label>
+                <select id="range_days" name="range_days" class="form-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Generate Report PDF
+                </button>
+                <a href="{{ url_for('reports_pdf', days=30) }}" class="btn btn-download-pdf" style="flex: 1;">
+                    Download PDF
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Create Secure Share Link Card -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--secondary-color);">Create Secure Shareable Link</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Generates a temporary read-only token link for doctors or family members. Access automatically expires in 7 days or can be revoked immediately.
+        </p>
+
+        <form method="POST" action="{{ url_for('share_report') }}">
+            <button type="submit" class="btn btn-outline" style="width: 100%; padding: 0.85rem;">
+                Generate Secure Read-Only Token Link
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Active & Revoked Shared Links Table -->
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Active & Past Shared Links</h3>
+    {% if shares %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Created Date</th>
+                    <th>Share Link URL</th>
+                    <th>Expires At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in shares %}
+                <tr>
+                    <td>{{ s.created_at|app_time('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% set share_url = config.PUBLIC_BASE_URL ~ url_for('shared_report', token=s.token) %}
+                        <input type="text" readonly value="{{ share_url }}" class="form-control" style="font-size: 0.8rem; padding: 0.3rem 0.5rem; background-color: var(--bg-color);" onclick="this.select();">
+                    </td>
+                    <td>{{ s.expires_at|app_time('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if s.revoked %}
+                        <span class="badge badge-danger">Revoked</span>
+                        {% else %}
+                        <span class="badge badge-success">Active Read-Only</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not s.revoked %}
+                        <form method="POST" action="{{ url_for('revoke_report', share_id=s.id) }}" style="display: inline;" onsubmit="return confirm('Revoke this share link?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;">Revoke Access</button>
+                        </form>
+                        {% else %}
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Access Blocked</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No report share links generated yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
